@@ -633,32 +633,29 @@ function cleanName(name) {
 // ── FETCH LOGO BATCH — GitHub Pages (lokal LOGO_DB) ──────
 async function fetchLogoBatch(teamNames) {
     if (!teamNames.length) return;
-    var needed = [], nameMap = {};
-    teamNames.forEach(function(name){
+    if (typeof LOGO_DB === 'undefined' || Object.keys(LOGO_DB).length === 0) return;
+
+    teamNames.forEach(function(name) {
         var clean = cleanName(name);
         var key   = clean.toLowerCase();
-        var cached = logoCache[key];
-        if (!(key in logoCache) || cached === null || cached === '' || cached === undefined) {
-            needed.push(clean);
-            if (!nameMap[key]) nameMap[key] = [];
-            nameMap[key].push(name);
-        } else {
-            logoCache[name.toLowerCase()] = logoCache[key];
+        var okey  = name.toLowerCase();
+
+        // Sudah ada di cache, skip
+        if (logoCache[key] && logoCache[key].indexOf('data:image/svg') < 0) {
+            logoCache[okey] = logoCache[key];
+            return;
         }
-    });
-    needed = needed.filter(function(n, i, a){ return a.indexOf(n) === i; });
-    if (!needed.length) return;
 
-    document.getElementById('fetchIndicator').classList.add('active');
-    document.getElementById('fetchStatus').textContent = 'Mencari logo ' + needed.length + ' tim...';
+        // Cari di LOGO_DB
+        var url = LOGO_DB[key] || null;
 
-    needed.forEach(function(clean) {
-        var key = clean.toLowerCase();
-        var url = null;
-        if (typeof LOGO_DB !== 'undefined') {
-            url = LOGO_DB[key] || null;
-            if (!url && key.length >= 4) {
-                var ks = Object.keys(LOGO_DB);
+        // Partial match jika belum ketemu
+        if (!url && key.length >= 3) {
+            var ks = Object.keys(LOGO_DB);
+            for (var i = 0; i < ks.length; i++) {
+                if (ks[i] === key) { url = LOGO_DB[ks[i]]; break; }
+            }
+            if (!url) {
                 for (var i = 0; i < ks.length; i++) {
                     if (ks[i].indexOf(key) !== -1 || key.indexOf(ks[i]) !== -1) {
                         url = LOGO_DB[ks[i]]; break;
@@ -666,13 +663,10 @@ async function fetchLogoBatch(teamNames) {
                 }
             }
         }
-        logoCache[key] = url || makeSVG(clean);
-        if (nameMap[key]) nameMap[key].forEach(function(orig){
-            logoCache[orig.toLowerCase()] = logoCache[key];
-        });
-    });
 
-    document.getElementById('fetchIndicator').classList.remove('active');
+        logoCache[key]  = url || makeSVG(clean);
+        logoCache[okey] = logoCache[key];
+    });
 }
 
 // ── LAPOR KE ADMIN PANEL (missing_logger.php) ─────────────
@@ -726,20 +720,29 @@ window.bolaReportCrash = bolaReportCrash;
 function getLogoUrl(teamName) {
     var key  = teamName.toLowerCase();
     var ckey = cleanName(teamName).toLowerCase();
-    // 1. logoCache
-    var url = (key in logoCache) ? logoCache[key] : ((ckey in logoCache) ? logoCache[ckey] : undefined);
-    if (url !== undefined && url) return url;
-    // 2. LOGO_DB lokal (29k+ entries)
-    if (typeof LOGO_DB !== 'undefined') {
+
+    // 1. Dari logoCache (hasil fetchLogoBatch)
+    if (logoCache[ckey] && logoCache[ckey].indexOf('data:image/svg') < 0) return logoCache[ckey];
+    if (logoCache[key]  && logoCache[key].indexOf('data:image/svg')  < 0) return logoCache[key];
+
+    // 2. Langsung dari LOGO_DB
+    if (typeof LOGO_DB !== 'undefined' && Object.keys(LOGO_DB).length > 0) {
         var lu = LOGO_DB[ckey] || LOGO_DB[key] || null;
-        if (!lu && ckey.length >= 4) {
+        if (!lu && ckey.length >= 3) {
             var ks = Object.keys(LOGO_DB);
             for (var i = 0; i < ks.length; i++) {
-                if (ks[i].indexOf(ckey) !== -1 || ckey.indexOf(ks[i]) !== -1) { lu = LOGO_DB[ks[i]]; break; }
+                if (ks[i] === ckey || ks[i] === key) { lu = LOGO_DB[ks[i]]; break; }
+            }
+            if (!lu) {
+                for (var i = 0; i < ks.length; i++) {
+                    if (ks[i].indexOf(ckey) !== -1 || ckey.indexOf(ks[i]) !== -1) { lu = LOGO_DB[ks[i]]; break; }
+                }
             }
         }
-        if (lu) { logoCache[ckey] = lu; return lu; }
+        if (lu) { logoCache[ckey] = lu; logoCache[key] = lu; return lu; }
     }
+
+    // 3. SVG fallback
     return makeSVG(teamName);
 }
 
@@ -1791,19 +1794,14 @@ async function handleInput() {
     var allCleans = getAllCleans(leagues);
     document.getElementById('totalLeagues').textContent = leagues.length;
     document.getElementById('totalMatches').textContent = leagues.reduce(function(a,l){ return a+l.matches.length; }, 0);
-    // Render pertama (instan, pakai cache)
+
+    // ★ FIX: Fetch logo DULU dari LOGO_DB, baru render
+    await fetchLogoBatch(allCleans);
+
+    // Render dengan logo yang sudah ada di cache
     renderPreview(leagues);
     document.getElementById('outputCode').textContent = buildOutputHTML(leagues);
-    // Fetch logo background
-    await fetchLogoBatch(allCleans);
-    // Patch logo langsung di pvTables (tanpa re-render penuh)
-    allCleans.forEach(function(name){
-        var url = logoCache[name.toLowerCase()];
-        if (!url) return;
-        document.querySelectorAll('#pvTables img[data-team]').forEach(function(img){
-            if (img.getAttribute('data-team').toLowerCase() === name.toLowerCase()) img.src = url;
-        });
-    });
+
     // Hitung matched logos
     var matched = allCleans.filter(function(n){
         var v = logoCache[n.toLowerCase()];
@@ -1811,8 +1809,6 @@ async function handleInput() {
     }).length;
     document.getElementById('totalLogos').textContent = matched;
     persistLogoCache();
-    // Rebuild output dengan logo final
-    document.getElementById('outputCode').textContent = buildOutputHTML(leagues);
 }
 function resetUI() {
     document.getElementById('outputCode').textContent = 'Script HTML lengkap akan muncul di sini secara otomatis...';
