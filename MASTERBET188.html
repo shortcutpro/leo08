@@ -572,7 +572,59 @@ function cleanName(name) {
         .replace(/\s+/g, ' ').trim();
 }
 
-// ── FETCH LOGO BATCH — GitHub Pages (lokal LOGO_DB) ──────
+
+// ── 6-STEP FUZZY LOOKUP — mirror bola_lookup_team() di api_logo.php ──────────
+function _fuzzyLookup(name, keyIn) {
+    if (typeof LOGO_DB === 'undefined') return null;
+    var key = (keyIn !== undefined) ? keyIn : name.toLowerCase();
+
+    // step 0: clean suffixes W, U17-U23, Senior, Junior, Women, Femenino
+    var clean = key
+        .replace(/\[\s*w\s*\]/gi, '')
+        .replace(/\(\s*w\s*\)/gi, '')
+        .replace(/\bu\s*1[0-9]\b/gi, '')
+        .replace(/\bu\s*2[0-3]\b/gi, '')
+        .replace(/\(u\s*\d{2}\)/gi, '')
+        .replace(/\b(senior|junior|women|femenino)\b/gi, '')
+        .replace(/\s+/g, ' ').trim();
+
+    // step 1: exact original
+    if (LOGO_DB[key]) return LOGO_DB[key];
+    // step 2: exact clean
+    if (clean && clean !== key && LOGO_DB[clean]) return LOGO_DB[clean];
+    // step 3: strip [N] prefix
+    var nonum = clean.replace(/^\[\d+\]\s*/, '');
+    if (nonum !== clean && LOGO_DB[nonum]) return LOGO_DB[nonum];
+    // step 4: strip trailing (bracket)
+    var nob = clean.replace(/\s*\(.*?\)\s*$/, '').trim();
+    if (nob && nob !== clean && LOGO_DB[nob]) return LOGO_DB[nob];
+    if (nob && nob !== nonum  && LOGO_DB[nob]) return LOGO_DB[nob];
+    // step 5 & 6: word matching
+    var base  = nonum || clean;
+    var words = base.split(/\s+/).filter(function(w){ return w.length >= 4; });
+    if (words.length > 0) {
+        var ks = Object.keys(LOGO_DB);
+        // step 5: ALL words >=4 chars
+        for (var i = 0; i < ks.length; i++) {
+            var ok = true;
+            for (var j = 0; j < words.length; j++) {
+                if (ks[i].indexOf(words[j]) < 0) { ok = false; break; }
+            }
+            if (ok) return LOGO_DB[ks[i]];
+        }
+        // step 6: any word >=5 chars — last resort
+        for (var i = 0; i < ks.length; i++) {
+            for (var j = 0; j < words.length; j++) {
+                if (words[j].length >= 5 && ks[i].indexOf(words[j]) >= 0) {
+                    return LOGO_DB[ks[i]];
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// ── FETCH LOGO BATCH — 6-step fuzzy (mirror api_logo.php) ────────────
 async function fetchLogoBatch(teamNames) {
     if (!teamNames.length) return;
     if (typeof LOGO_DB === 'undefined' || Object.keys(LOGO_DB).length === 0) return;
@@ -582,30 +634,12 @@ async function fetchLogoBatch(teamNames) {
         var key   = clean.toLowerCase();
         var okey  = name.toLowerCase();
 
-        // Sudah ada di cache, skip
         if (logoCache[key] && logoCache[key].indexOf('data:image/svg') < 0) {
             logoCache[okey] = logoCache[key];
             return;
         }
 
-        // Cari di LOGO_DB
-        var url = LOGO_DB[key] || null;
-
-        // Partial match jika belum ketemu
-        if (!url && key.length >= 3) {
-            var ks = Object.keys(LOGO_DB);
-            for (var i = 0; i < ks.length; i++) {
-                if (ks[i] === key) { url = LOGO_DB[ks[i]]; break; }
-            }
-            if (!url) {
-                for (var i = 0; i < ks.length; i++) {
-                    if (ks[i].indexOf(key) !== -1 || key.indexOf(ks[i]) !== -1) {
-                        url = LOGO_DB[ks[i]]; break;
-                    }
-                }
-            }
-        }
-
+        var url = _fuzzyLookup(clean, key);
         logoCache[key]  = url || makeSVG(clean);
         logoCache[okey] = logoCache[key];
     });
@@ -663,25 +697,18 @@ function getLogoUrl(teamName) {
     var key  = teamName.toLowerCase();
     var ckey = cleanName(teamName).toLowerCase();
 
-    // 1. Dari logoCache (hasil fetchLogoBatch)
+    // 1. Dari logoCache
     if (logoCache[ckey] && logoCache[ckey].indexOf('data:image/svg') < 0) return logoCache[ckey];
     if (logoCache[key]  && logoCache[key].indexOf('data:image/svg')  < 0) return logoCache[key];
 
-    // 2. Langsung dari LOGO_DB
+    // 2. Fuzzy lookup ke LOGO_DB
     if (typeof LOGO_DB !== 'undefined' && Object.keys(LOGO_DB).length > 0) {
-        var lu = LOGO_DB[ckey] || LOGO_DB[key] || null;
-        if (!lu && ckey.length >= 3) {
-            var ks = Object.keys(LOGO_DB);
-            for (var i = 0; i < ks.length; i++) {
-                if (ks[i] === ckey || ks[i] === key) { lu = LOGO_DB[ks[i]]; break; }
-            }
-            if (!lu) {
-                for (var i = 0; i < ks.length; i++) {
-                    if (ks[i].indexOf(ckey) !== -1 || ckey.indexOf(ks[i]) !== -1) { lu = LOGO_DB[ks[i]]; break; }
-                }
-            }
+        var lu = _fuzzyLookup(teamName, key) || _fuzzyLookup(cleanName(teamName), ckey);
+        if (lu) {
+            logoCache[ckey] = lu;
+            logoCache[key]  = lu;
+            return lu;
         }
-        if (lu) { logoCache[ckey] = lu; logoCache[key] = lu; return lu; }
     }
 
     // 3. SVG fallback
