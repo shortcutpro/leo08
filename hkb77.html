@@ -588,12 +588,31 @@ function cleanName(name) {
 
 
 // ── 6-STEP FUZZY LOOKUP — mirror bola_lookup_team() di api_logo.php ──────────
+// ── NORMALISASI: buang aksen/diakritik + samakan tanda baca ──────────────────
+function _bolaNorm(s) {
+    if (s == null) return '';
+    s = String(s).toLowerCase();
+    // pisah diakritik (é->e, ñ->n, ç->c, ş->s, ü->u, dst.) lalu buang tanda combining
+    try { s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+    // huruf khusus yang tidak ke-decompose oleh NFD
+    s = s.replace(/[ø]/g,'o').replace(/[ł]/g,'l').replace(/[đ]/g,'d')
+         .replace(/[ı]/g,'i').replace(/[æ]/g,'ae').replace(/[œ]/g,'oe')
+         .replace(/[ß]/g,'ss').replace(/[þ]/g,'th');
+    // apostrof/titik/strip → spasi; sisanya rapikan
+    s = s.replace(/['\u2019\u2018\.]/g, ' ').replace(/[-_/]/g, ' ');
+    s = s.replace(/[^a-z0-9\s\[\]\(\)]/g, ' ');
+    s = s.replace(/\s+/g, ' ').trim();
+    return s;
+}
+
 function _fuzzyLookup(name, keyIn) {
     if (typeof LOGO_DB === 'undefined') return null;
-    var key = (keyIn !== undefined) ? keyIn : name.toLowerCase();
+    var key  = (keyIn !== undefined) ? keyIn : name.toLowerCase();
+    var nkey = _bolaNorm(key);   // versi ternormalisasi (tanpa aksen/tanda baca)
 
     // ── step 0: strip gender/age/bracket suffixes ────────────────────────
-    var clean = key
+    function _stripSuffix(x){
+        return x
         .replace(/\[\s*w\s*\]/gi, '')
         .replace(/\(\s*w\s*\)/gi, '')
         .replace(/\bu\s*1[0-9]\b/gi, '')
@@ -602,6 +621,56 @@ function _fuzzyLookup(name, keyIn) {
         .replace(/\[youth\]/gi, '')
         .replace(/\b(senior|junior|women|femenino)\b/gi, '')
         .replace(/\s+/g, ' ').trim();
+    }
+    var clean  = _stripSuffix(key);
+    var nclean = _stripSuffix(nkey);
+
+    // ── step 0b: exact match pakai versi ternormalisasi (aksen/tanda baca) ──
+    if (nkey   && LOGO_DB[nkey])   return LOGO_DB[nkey];
+    if (nclean && nclean !== nkey && LOGO_DB[nclean]) return LOGO_DB[nclean];
+
+    // ── step 0c: ALIAS singkatan populer → nama resmi di DB ──────────────
+    // Aman & manual: hanya singkatan terkenal yg umum muncul di feed prediksi.
+    var _ALIAS = {
+        'man utd':'manchester united','man united':'manchester united','manutd':'manchester united',
+        'man city':'manchester city','mancity':'manchester city',
+        'spurs':'tottenham hotspur','tottenham':'tottenham hotspur',
+        'wolves':'wolverhampton wanderers','wolverhampton':'wolverhampton wanderers',
+        'forest':'nottingham forest','notts forest':'nottingham forest','nottm forest':'nottingham forest',
+        'leeds':'leeds united','sheff utd':'sheffield united','sheff united':'sheffield united',
+        'sheff wed':'sheffield wednesday','newcastle':'newcastle united','west ham':'west ham united',
+        'brighton':'brighton and hove albion','leicester':'leicester city',
+        'psg':'paris saint-germain','paris sg':'paris saint-germain',
+        'bvb':'borussia dortmund','dortmund':'borussia dortmund',
+        'gladbach':'borussia monchengladbach','mgladbach':'borussia monchengladbach',
+        'm gladbach':'borussia monchengladbach','monchengladbach':'borussia monchengladbach',
+        'bayern':'bayern munich','fc bayern':'bayern munich','bayern munchen':'bayern munich',
+        'bayern muenchen':'bayern munich','leverkusen':'bayer leverkusen',
+        'leipzig':'rb leipzig','rbl':'rb leipzig','frankfurt':'eintracht frankfurt',
+        'schalke':'schalke 04','gladbach women':'borussia monchengladbach women',
+        'inter':'inter milan','internazionale':'inter milan','milan':'ac milan',
+        'juve':'juventus','napoli':'napoli','roma':'as roma','lazio':'lazio',
+        'atletico':'atletico madrid','atleti':'atletico madrid',
+        'barca':'barcelona','barça':'barcelona','real':'real madrid',
+        'athletic':'athletic bilbao','athletic club':'athletic bilbao',
+        'betis':'real betis','sevilla':'sevilla',
+        'sporting':'sporting cp','sporting lisbon':'sporting cp','porto':'fc porto',
+        'benfica':'benfica','ajax':'ajax','psv':'psv eindhoven',
+        'gala':'galatasaray','fener':'fenerbahce','besiktas':'besiktas',
+        'al hilal':'al-hilal','al nassr':'al-nassr','al ittihad':'al-ittihad',
+        'al ahli':'al-ahli','al ahly':'al ahly','al ain':'al ain',
+        'flamengo':'flamengo','fla':'flamengo','palmeiras':'palmeiras',
+        'corinthians':'corinthians','sao paulo':'sao paulo','santos':'santos',
+        'gremio':'gremio','inter porto alegre':'internacional','boca':'boca juniors',
+        'river':'river plate','lyon':'lyon','om':'marseille','marseille':'marseille',
+        'monaco':'as monaco','lille':'lille','rennes':'rennes','nice':'nice'
+    };
+    var _aliasHit = _ALIAS[nkey] || _ALIAS[nclean];
+    if (_aliasHit) {
+        if (LOGO_DB[_aliasHit]) return LOGO_DB[_aliasHit];
+        var _an = _bolaNorm(_aliasHit);
+        if (LOGO_DB[_an]) return LOGO_DB[_an];
+    }
 
     // ── step 1: exact original ───────────────────────────────────────────
     if (LOGO_DB[key]) return LOGO_DB[key];
@@ -635,29 +704,46 @@ function _fuzzyLookup(name, keyIn) {
         if (pw.length >= 2 && LOGO_DB[pw]) return LOGO_DB[pw];
     }
 
-    // ── step 7: ALL words >=4 chars present in DB key ────────────────────
-    var base  = nonum || clean;
+    // ── step 7: ALL words >=4 chars present in DB key (pakai key TERNORMALISASI) ──
+    // base pakai versi normalized supaya aksen/tanda baca cocok dgn key DB.
+    var base  = (nclean || nkey || nonum || clean);
     var words = base.split(/\s+/).filter(function(w){ return w.length >= 4; });
     if (words.length > 0) {
-        var ks = Object.keys(LOGO_DB);
-        for (var i = 0; i < ks.length; i++) {
+        var NK = _bolaNormKeys();           // [ [normKey, origKey], ... ] di-cache
+        var i, j;
+        for (i = 0; i < NK.length; i++) {
+            var nk = NK[i][0];
             var ok = true;
-            for (var j = 0; j < words.length; j++) {
-                if (ks[i].indexOf(words[j]) < 0) { ok = false; break; }
+            for (j = 0; j < words.length; j++) {
+                if (nk.indexOf(words[j]) < 0) { ok = false; break; }
             }
-            if (ok) return LOGO_DB[ks[i]];
+            if (ok) return LOGO_DB[NK[i][1]];
         }
         // ── step 8: any word >=5 chars present — last resort ────────────
-        for (var i = 0; i < ks.length; i++) {
-            for (var j = 0; j < words.length; j++) {
-                if (words[j].length >= 5 && ks[i].indexOf(words[j]) >= 0) {
-                    return LOGO_DB[ks[i]];
+        for (i = 0; i < NK.length; i++) {
+            for (j = 0; j < words.length; j++) {
+                if (words[j].length >= 5 && NK[i][0].indexOf(words[j]) >= 0) {
+                    return LOGO_DB[NK[i][1]];
                 }
             }
         }
     }
 
     return null;
+}
+
+// Index key DB ternormalisasi (dibuat sekali, lalu di-cache).
+var _BOLA_NK = null;
+function _bolaNormKeys() {
+    if (_BOLA_NK) return _BOLA_NK;
+    _BOLA_NK = [];
+    var ks = Object.keys(LOGO_DB);
+    for (var i = 0; i < ks.length; i++) {
+        var k = ks[i];
+        if (k === '' || !LOGO_DB[k]) continue;
+        _BOLA_NK.push([_bolaNorm(k), k]);
+    }
+    return _BOLA_NK;
 }
 
 // ── FETCH LOGO BATCH — 6-step fuzzy (mirror api_logo.php) ────────────

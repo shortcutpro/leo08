@@ -1,9 +1,9 @@
 # IBC Auto Generator — GitHub Pages Edition
 
-Generator prediksi bola multi-site (IBC138, MASTERBET188, WSO288, KUATBET, HKB77) — pure HTML/JS, tanpa PHP backend.
+Generator prediksi bola multi-site (IBC138, MASTERBET188) — pure HTML/JS, tanpa PHP backend.
 
 ## 🌐 Live Demo
-> Deploy ke GitHub Pages: `https://<username>.github.io/<repo>/generator.html`
+> Deploy ke GitHub Pages: `https://<username>.github.io/<repo-name>/`
 
 ## 📁 Struktur Repo
 
@@ -24,12 +24,6 @@ ibcauto-github/
 1. Push semua file ke repo GitHub
 2. Settings → Pages → Source: `main` branch, folder: `/ (root)`
 3. Akses via `https://<username>.github.io/<repo>/generator.html`
-	- `https://shortcutpro.github.io/leo08/generator.html`
-	- `https://shortcutpro.github.io/leo08/ibc138.html`
-	- `https://shortcutpro.github.io/leo08/hkb77.html`
-	- `https://shortcutpro.github.io/leo08/kuatbet.html`
-	- `https://shortcutpro.github.io/leo08/masterbet188.html`
-	- `https://shortcutpro.github.io/leo08/wso288.html`
 
 ## ⚙️ Konfigurasi
 
