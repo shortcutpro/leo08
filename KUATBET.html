@@ -312,7 +312,21 @@ var _LOGO_DB_LOADED = true;
 var _LOGO_DB_LOADING = false;
 var _LOGO_DB_QUEUE = [];
 function loadLogoDb(cb){ if(cb) cb(); }
-console.log('[LOGO_DB] Loaded ' + Object.keys(LOGO_DB).length + ' entries.');
+
+// ── INDEX TERNORMALISASI (key = lowercase + trim) ─────────────────────────
+var LOGO_IDX  = {};
+var _LOGO_KEYS = [];
+(function buildLogoIndex(){
+    var raw = Object.keys(LOGO_DB);
+    for (var i = 0; i < raw.length; i++) {
+        var k = raw[i];
+        var url = LOGO_DB[k];
+        if (k === '' || url === '' || url === null || url === undefined) continue;
+        var nk = String(k).toLowerCase().trim().replace(/\s+/g, ' ');
+        if (!(nk in LOGO_IDX)) { LOGO_IDX[nk] = url; _LOGO_KEYS.push(nk); }
+    }
+})();
+console.log('[LOGO_DB] Loaded ' + Object.keys(LOGO_DB).length + ' entries (index: ' + _LOGO_KEYS.length + ').');
 </script>
 </head>
 <body>
