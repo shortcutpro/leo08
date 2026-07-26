@@ -306,6 +306,7 @@ button { flex:1; padding:15px 25px; border:none; border-radius:12px; font-family
 <script src="logo-db-7.js"></script>
 <script src="logo-db-8.js"></script>
 <script src="logo-db-9.js"></script>
+<script src="logo-db.js"></script>
 <script>
 var LOGO_DB = window.LOGO_DB || {};
 var _LOGO_DB_LOADED = true;
@@ -491,7 +492,7 @@ namun tetap tampil di output prediksi."></textarea>
 
                         <!-- 4. MARQUEE -->
                         <div style="overflow:hidden;white-space:nowrap;width:90%;margin:0 auto 12px;border:3px solid var(--primary);border-radius:15px;background:linear-gradient(135deg,#1a1a1a,#000,#1a1a1a);padding:12px 0;box-shadow:0 0 16px rgba(212,175,55,.35);">
-                            <div id="pvMarquee" style="display:inline-block;animation:pvmarquee 38s linear infinite;padding-left:100%;font-size:clamp(10px,2.5vw,13px);font-weight:900;color:var(--primary);letter-spacing:1.5px;text-shadow:0 0 10px rgba(212,175,55,.5);">🔥 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di IBC138 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 🔥</div>
+                            <div id="pvMarquee" style="display:inline-block;animation:pvmarquee 38s linear infinite;padding-left:100%;font-size:clamp(10px,2.5vw,13px);font-weight:900;color:var(--primary);letter-spacing:1.5px;text-shadow:0 0 10px rgba(212,175,55,.5);">👑 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di IBC138 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 👑</div>
                         </div>
                         <style>@keyframes pvmarquee{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}</style>
 
@@ -539,12 +540,12 @@ namun tetap tampil di output prediksi."></textarea>
     </div>
 </div>
 <div class="notification" id="notification">✓ Notification</div>
-<div id="pageFooter">🔒 2025 IBC138 Generator | All Rights Reserved 🔒</div>
+<div id="pageFooter">🔒 2026 IBC138 Generator | All Rights Reserved 🔒</div>
 
 <script>
 // ══════════════════════════════════════════════════════════
 //  IBC138 Generator
-//  2 Sites: IBC138 | MASTERBET188
+//  Single Site: IBC138
 // ══════════════════════════════════════════════════════════
 
 // ── SITES CONFIG ──────────────────────────────────────────
@@ -784,7 +785,7 @@ function switchSite(site) {
     var cfg = SITES[site];
     var root = document.documentElement;
     Object.keys(cfg.cssVars).forEach(function(k){ root.style.setProperty(k, cfg.cssVars[k]); });
-    document.body.style.background = 'linear-gradient(135deg,' + cfg.bgOverlay + '),url("' + cfg.bg + '")';
+    document.body.style.background = ((cfg.bg && cfg.bg.charAt(0)==='#') ? ('linear-gradient(135deg,' + cfg.bgOverlay + '),' + cfg.bg) : ('linear-gradient(135deg,' + cfg.bgOverlay + '),url("' + cfg.bg + '")'));
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     document.body.style.backgroundAttachment = 'fixed';
@@ -839,8 +840,8 @@ function parseMatchLine(line) {
     }
     var vm = tmp.match(/^(.+?)\s+v\.?s\.?\s+(.+)$/i);
     if (!vm) return null;
-    var team1 = vm[1].trim().replace(/\[\s*[nN]\s*\]/g,'').replace(/\s+/g,' ').trim();
-    var team2 = vm[2].trim().replace(/\[\s*[nN]\s*\]/g,'').replace(/\s+/g,' ').trim();
+    var team1 = vm[1].trim().replace(/^\[\d+\]\s*/,'').replace(/\[\s*[nN]\s*\]/g,'').replace(/\s+/g,' ').trim();
+    var team2 = vm[2].trim().replace(/^\[\d+\]\s*/,'').replace(/\[\s*[nN]\s*\]/g,'').replace(/\s+/g,' ').trim();
     if (!team1 || !team2) return null;
     if (score1 === '') { score1 = '-'; score2 = '-'; }
     return {
@@ -1521,11 +1522,12 @@ function simpleHash(s) {
 }
 
 // MATCH_RE: dd/mm HH:mm WIB TEAM1 vs TEAM2 SKOR
-var MATCH_RE_FETCH = /^(\d{1,2}[\/\-]\d{1,2})\s+(\d{1,2}[:.]\d{2})(?:\s*WIB)?\s+(.+?)\s+vs?\.?\s+(.+?)\s+(\d+\s*[:\-]\s*\d+)\s*$/i;
+var MATCH_RE_FETCH = /^(\d{1,2}[\/\-]\d{1,2})\s+(\d{1,2}[:.]\d{2})(?:\s*WIB)?\s+(.+?)\s+vs?\.?\s+(.+?)\s+(\d+\s*[:\-\u2013\u2014]\s*\d+)\s*$/i;
 
 function preNorm(line) {
     return line.trim()
         .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&#160;/g, ' ')
+        .replace(/[\u2013\u2014]/g, '-')
         .replace(/\s+/g, ' ').trim();
 }
 
@@ -1561,7 +1563,7 @@ function parseRawHtml(html) {
         var btnText = (btn.textContent || btn.innerText || '').trim();
 
         // Filter: hanya yang teksnya mengandung "PREDIKSI"
-        if (!/PREDIKSI/i.test(btnText)) return;
+        if (!/PREDIKSI/i.test(btnText) || /JADWAL/i.test(btnText)) return;
 
         // Ambil target panel ID dari attribute
         var targetId = btn.getAttribute('data-target') || btn.getAttribute('data-bs-target') || '';
@@ -1639,7 +1641,9 @@ function parseRawHtml(html) {
             var isNoise = /https?:\/\/|www\.|@/i.test(clean)
                 || /^\d+$/.test(clean)
                 || clean.length > 100
-                || /klik|login|daftar|register|promo|bonus|copyright|shortq/i.test(clean);
+                || /klik|login|daftar|register|promo|bonus|copyright|shortq/i.test(clean)
+                || /\bv\.?s\.?\b/i.test(clean)
+                || /^\d/.test(clean);
 
             if (!isNoise && /[A-Za-z]/.test(clean)) {
                 var up = clean.toUpperCase();
@@ -1675,14 +1679,23 @@ function parseGenericText(doc) {
     });
     var text = (doc.body && (doc.body.innerText || doc.body.textContent)) || '';
     var allLines = text.split(/\r?\n/).map(function(l){ return preNorm(l); }).filter(function(l){ return l.length > 1; });
-    var NOISE_RE = /klik|disini|whatsapp|telegram|instagram|copyright|privacy|https?:|www\.|@/i;
-    var result = []; var capturing = false; var lastWasLeague = false;
+    var NOISE_RE = /klik|disini|whatsapp|telegram|instagram|copyright|privacy|verified|https?:|www\.|@/i;
+    // PENTING: ambil HANYA section PREDIKSI (skip section JADWAL berisi angka handicap)
+    var startIdx = -1;
+    for (var i = 0; i < allLines.length; i++) {
+        if (!/PREDIKSI\s*BOLA/i.test(allLines[i])) continue;
+        if (/\bv\.?s\.?\b/i.test(allLines[i])) continue;
+        for (var j = i + 1; j < allLines.length; j++) { if (MATCH_RE_FETCH.test(allLines[j])) { startIdx = i; break; } }
+    }
+    if (startIdx >= 0) allLines = allLines.slice(startIdx + 1);
+    // Jika section PREDIKSI ketemu, langsung capture supaya header liga pertama tidak hilang
+    var result = []; var capturing = (startIdx >= 0); var lastWasLeague = false;
     allLines.forEach(function(line) {
         var isMatch = MATCH_RE_FETCH.test(line);
         if (!capturing && isMatch) capturing = true;
         if (!capturing) return;
         if (isMatch) { result.push(line); lastWasLeague = false; return; }
-        var isNoise = NOISE_RE.test(line) || /^\d+$/.test(line) || line.length > 90;
+        var isNoise = NOISE_RE.test(line) || /^\d+$/.test(line) || line.length > 90 || /\bv\.?s\.?\b/i.test(line) || /^\d/.test(line);
         var isLeague = !isNoise && line.length >= 3 && /[A-Za-z]/.test(line);
         if (isLeague && !lastWasLeague) {
             var up = line.toUpperCase();
@@ -1915,7 +1928,7 @@ function promptCopy(text) {
 function clearInput() {
     document.getElementById('inputText').value = '';
     logoCache = {};
-    try { localStorage.removeItem('bola_logoCache'); } catch(e){}
+    try { localStorage.removeItem('bola_ibc138_logoCache'); } catch(e){}
     resetUI();
     showNotification('✓ Input berhasil dibersihkan!');
 }
@@ -1932,10 +1945,10 @@ function showNotification(msg) {
 // ── LOCALSTORAGE PERSISTENCE (site, colors, logo cache) ────
 // Catatan: input prediksi SENGAJA tidak dipersist — refresh = halaman bersih.
 var LS_KEYS = {
-    site:         'bola_currentSite',
-    colors:       'bola_customColors',
-    logoCache:    'bola_logoCache',
-    cacheVersion: 'bola_logoCache_v'   // ★ v7.1: server-side cache version stamp
+    site:         'bola_ibc138_currentSite',
+    colors:       'bola_ibc138_customColors',
+    logoCache:    'bola_ibc138_logoCache',
+    cacheVersion: 'bola_ibc138_logoCache_v'   // ★ v7.1: server-side cache version stamp
 };
 
 function lsGet(key, def) {
@@ -1993,6 +2006,10 @@ function restoreSettings() {
     var cfg = SITES[targetSite];
     var root = document.documentElement;
     Object.keys(cfg.cssVars).forEach(function(k){ root.style.setProperty(k, cfg.cssVars[k]); });
+    document.body.style.background = ((cfg.bg && cfg.bg.charAt(0)==='#') ? ('linear-gradient(135deg,' + cfg.bgOverlay + '),' + cfg.bg) : ('linear-gradient(135deg,' + cfg.bgOverlay + '),url("' + cfg.bg + '")'));
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundAttachment = 'fixed';
     if (targetSite !== currentSite) {
         currentSite = targetSite;
         // Update UI badge + header tanpa trigger full switchSite
@@ -2004,7 +2021,7 @@ function restoreSettings() {
         document.title = cfg.name + ' Generator';
         var fav = document.getElementById('favicon'); if(fav) fav.href = cfg.favicon;
         // Update body background
-        document.body.style.background = 'linear-gradient(135deg,' + cfg.bgOverlay + '),url("' + cfg.bg + '")';
+        document.body.style.background = ((cfg.bg && cfg.bg.charAt(0)==='#') ? ('linear-gradient(135deg,' + cfg.bgOverlay + '),' + cfg.bg) : ('linear-gradient(135deg,' + cfg.bgOverlay + '),url("' + cfg.bg + '")'));
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundPosition = 'center';
         document.body.style.backgroundAttachment = 'fixed';
