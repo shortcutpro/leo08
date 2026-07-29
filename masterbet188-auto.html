@@ -56,6 +56,68 @@ var PROXIES = [
 ];
 
 /* ═══════════════════════════════════════════════
+   SUMBER JPKOLONI4D — URL OTOMATIS IKUT TANGGAL (WIB)
+   Format : prediksi-bola-{tgl1}-{tgl2}-{bulan}-{tahun}
+   Contoh : prediksi-bola-28-29-juli-2026
+   Set JPK_ENABLED = false untuk kembali ke sumber lama.
+═══════════════════════════════════════════════ */
+var JPK_ENABLED = true;
+var JPK_BASE    = 'https://jpbolepalngi.pagesco.de/prediksi-bola-';
+var JPK_BULAN   = ['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
+
+function jpkTanggalWIB(offsetHari){
+  var now = new Date(Date.now() + 7*3600*1000);
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + (offsetHari||0)));
+}
+function jpkKandidat(d1){
+  var d2 = new Date(Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate()+1));
+  var t1=d1.getUTCDate(), t2=d2.getUTCDate();
+  var b1=JPK_BULAN[d1.getUTCMonth()], b2=JPK_BULAN[d2.getUTCMonth()];
+  var y1=d1.getUTCFullYear(), y2=d2.getUTCFullYear();
+  if(b1===b2) return [JPK_BASE+t1+'-'+t2+'-'+b1+'-'+y1];
+  var v=[JPK_BASE+t1+'-'+b1+'-'+t2+'-'+b2+'-'+y2,
+         JPK_BASE+t1+'-'+t2+'-'+b1+'-'+y1,
+         JPK_BASE+t1+'-'+t2+'-'+b2+'-'+y2];
+  if(y1!==y2) v.push(JPK_BASE+t1+'-'+b1+'-'+y1+'-'+t2+'-'+b2+'-'+y2);
+  return v;
+}
+function jpkDaftarUrl(){
+  // hari ini dulu, lalu kemarin (kalau halaman hari ini belum terbit)
+  return jpkKandidat(jpkTanggalWIB(0)).concat(jpkKandidat(jpkTanggalWIB(-1)));
+}
+function jpkFlat(s){
+  return s.replace(/<script[\s\S]*?<\/script>/gi,' ')
+          .replace(/<style[\s\S]*?<\/style>/gi,' ')
+          .replace(/<[^>]+>/g,' ')
+          .replace(/&amp;/g,'&').replace(/&nbsp;|&#160;/g,' ')
+          .replace(/&bull;|&#8226;/g,'•')
+          .replace(/\s+/g,' ').trim();
+}
+/* Konversi halaman jpkoloni → format lines pipeline lama:
+   "NAMA LIGA" lalu "28/07 18:00 WIB Home VS Away 1 : 0" */
+function parseJpkoloni(html){
+  if(!html) return [];
+  var out=[];
+  var MRE=/(\d{1,2}:\d{2})\s*WIB\s*•?\s*(\d{2}\/\d{2})\s+(.+?)\s+VS\s+(.+?)\s+(\d+)\s*[:\-]\s*(\d+)(?=\s|$)/g;
+  var parts=html.split(/<h[23][^>]*>/gi);
+  for(var p=1;p<parts.length;p++){
+    var seg=parts[p];
+    var cut=seg.search(/<\/h[23]>/i);
+    if(cut<0) continue;
+    var liga=jpkFlat(seg.slice(0,cut));
+    var body=jpkFlat(seg.slice(cut));
+    if(!liga || liga.length>60 || /rincian|prediksi bola \d/i.test(liga)) continue;
+    var rows=[]; var m; MRE.lastIndex=0;
+    while((m=MRE.exec(body))!==null){
+      rows.push(m[2]+' '+m[1]+' WIB '+m[3].replace(/^\s+|\s+$/g,'')+' VS '+m[4].replace(/^\s+|\s+$/g,'')+' '+m[5]+' : '+m[6]);
+    }
+    if(rows.length){ out.push(liga.toUpperCase()); out.push.apply(out,rows); }
+  }
+  return out;
+}
+
+
+/* ═══════════════════════════════════════════════
    ELEMEN ROOT
 ═══════════════════════════════════════════════ */
 var root = document.getElementById('masterbet188-root');
@@ -759,10 +821,33 @@ async function loadAndRender(){
     showLoading('Memuat Prediksi MASTERBET188…', 0);
     await animateProgress(0, 5, 400);
 
-    var html = await fetchHTML(SOURCE_URL);
+    var lines = null;
+
+    // 1) SUMBER UTAMA: jpbolepalngi — URL otomatis mengikuti tanggal hari ini (WIB)
+    if (JPK_ENABLED) {
+      var jpkUrls = jpkDaftarUrl();
+      for (var ju = 0; ju < jpkUrls.length && !lines; ju++) {
+        try {
+          console.log('[SUMBER] Coba jpkoloni: ' + jpkUrls[ju]);
+          var jpkHtml = await fetchHTML(jpkUrls[ju]);
+          var jpkLines = parseJpkoloni(jpkHtml);
+          if (jpkLines.length) {
+            lines = jpkLines;
+            console.log('[SUMBER] jpkoloni OK (' + jpkLines.length + ' baris): ' + jpkUrls[ju]);
+          } else {
+            console.warn('[SUMBER] jpkoloni kosong: ' + jpkUrls[ju]);
+          }
+        } catch (eJpk) { console.warn('[SUMBER] jpkoloni gagal: ' + eJpk.message); }
+      }
+    }
 
     await animateProgress(60, 75, 300);
-    var lines = parseRawHtml(html);
+
+    // 2) FALLBACK: sumber lama (shortq.xyz) kalau jpkoloni tidak tersedia
+    if (!lines || !lines.length) {
+      var html = await fetchHTML(SOURCE_URL);
+      lines = parseRawHtml(html);
+    }
     if(!lines.length) throw new Error('Tidak ada data ditemukan');
     var input = lines.join('\n');
 
