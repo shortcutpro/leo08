@@ -6,7 +6,7 @@
 ═══════════════════════════════════════════════ */
 var SOURCE_URL    = 'https://shortq.xyz/prediksibola'; // sumber data prediksi
 var SITE_NAME     = 'MASTERBET188';
-var SITE_LOGO     = 'https://zfljh.top/stream/id?attachId=4127014';
+var SITE_LOGO     = 'https://sarangmasterbet188.top/stream/id?attachId=4127014';
 var MBAPPE_GIF    = 'https://photoku.io/images/2026/05/31/giffmbappee-finall.gif';
 var MARQUEE_TEXT  = '🏆 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di MASTERBET188 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 🏆';
 var COLOR_MAIN    = '#C9A84C';
@@ -85,6 +85,122 @@ function parseJpkoloni(html){
 
 
 /* ═══════════════════════════════════════════════
+   BIG MATCH — "Pertandingan Spesial" dari halaman sumber
+   Diambil dari elemen .featured-card di HTML jpbolepalngi.
+   Ikut ganti otomatis saat URL tanggal berubah.
+═══════════════════════════════════════════════ */
+window.__JPK_RAW_HTML__ = window.__JPK_RAW_HTML__ || '';
+
+function _bmClean(s){
+  return (s||'').replace(/<[^>]+>/g,' ')
+                .replace(/&amp;/g,'&').replace(/&nbsp;|&#160;/g,' ')
+                .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'")
+                .replace(/\s+/g,' ').trim();
+}
+function _bmAttr(tag, name){
+  var re = new RegExp(name+'\\s*=\\s*"([^"]*)"','i');
+  var m = re.exec(tag); return m ? m[1] : '';
+}
+
+/* Ambil daftar Big Match dari HTML sumber.
+   Output: [{liga, home, away, logoHome, logoAway, tgl, jam, hdp, pred}] */
+function parseBigMatch(html){
+  if(!html) return [];
+  var out=[];
+  // Pisah per <article ... featured-card ...> ... </article>
+  var re=/<article\b[^>]*class="[^"]*featured-card[^"]*"[^>]*>([\s\S]*?)<\/article>/gi;
+  var m;
+  while((m=re.exec(html))!==null){
+    var card=m[1];
+
+    // Liga (di dalam .feature-top small)
+    var liga='';
+    var lg=/<small[^>]*>([\s\S]*?)<\/small>/i.exec(card);
+    if(lg) liga=_bmClean(lg[1]);
+
+    // Dua tim: cari semua .feature-team
+    var teams=[]; var logos=[];
+    var tre=/<div\b[^>]*class="[^"]*feature-team[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<em)/gi;
+    // Lebih aman: ambil semua <b>nama</b> dan semua <img src> dalam .feature-teams
+    var teamsBox=/<div\b[^>]*class="[^"]*feature-teams[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<div\b[^>]*class="[^"]*feature-meta/i.exec(card);
+    var scope = teamsBox ? teamsBox[1] : card;
+
+    var nameRe=/<b>([\s\S]*?)<\/b>/gi, nm;
+    while((nm=nameRe.exec(scope))!==null){ teams.push(_bmClean(nm[1])); }
+
+    var imgRe=/<img\b[^>]*>/gi, im;
+    while((im=imgRe.exec(scope))!==null){ logos.push(_bmAttr(im[0],'src')); }
+
+    if(teams.length<2) continue;
+
+    // Meta: "30/07/2026 • 23:00 WIB"
+    var tgl='', jam='';
+    var meta=/<div\b[^>]*class="[^"]*feature-meta[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(card);
+    if(meta){
+      var mt=_bmClean(meta[1]);
+      var dm=/(\d{1,2}\/\d{1,2}\/\d{2,4})/.exec(mt); if(dm) tgl=dm[1];
+      var jm=/(\d{1,2}:\d{2})/.exec(mt);            if(jm) jam=jm[1];
+    }
+
+    // Values: Pasaran HDP + Prediksi (dalam .feature-values span > b)
+    var hdp='', pred='';
+    var vals=/<div\b[^>]*class="[^"]*feature-values[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(card);
+    if(vals){
+      var sre=/<span[^>]*>([\s\S]*?)<b>([\s\S]*?)<\/b>[\s\S]*?<\/span>/gi, sv;
+      while((sv=sre.exec(vals[1]))!==null){
+        var label=_bmClean(sv[1]).toLowerCase();
+        var value=_bmClean(sv[2]);
+        if(label.indexOf('hdp')!==-1 || label.indexOf('pasaran')!==-1) hdp=value;
+        else if(label.indexOf('prediksi')!==-1) pred=value;
+      }
+    }
+
+    out.push({
+      liga:liga, home:teams[0], away:teams[1],
+      logoHome:logos[0]||'', logoAway:logos[1]||'',
+      tgl:tgl, jam:jam, hdp:hdp, pred:pred
+    });
+  }
+  return out;
+}
+
+/* Bangun HTML section Big Match (kosong = string kosong, section disembunyikan) */
+function buildBigMatchHTML(){
+  var items = parseBigMatch(window.__JPK_RAW_HTML__ || '');
+  if(!items.length) return '';
+
+  var cards='';
+  items.forEach(function(bm){
+    var lh = bm.logoHome ? getLogoUrl(cleanName(bm.home)) : '';
+    var la = bm.logoAway ? getLogoUrl(cleanName(bm.away)) : '';
+    // Prioritaskan logo asli dari sumber, fallback ke DB logo brand
+    var imgH = bm.logoHome || lh;
+    var imgA = bm.logoAway || la;
+    var valLine='';
+    if(bm.hdp)  valLine+='<span class="bm-val"><i>Pasaran HDP</i><b>'+bm.hdp+'</b></span>';
+    if(bm.pred) valLine+='<span class="bm-val"><i>Prediksi</i><b>'+bm.pred+'</b></span>';
+
+    cards+='<article class="bm-card"><span class="bm-shine"></span>'
+      +  '<div class="bm-badgewrap"><span class="bm-badge">BIG MATCH</span></div>'
+      +  '<div class="bm-league">'+(bm.liga||'')+'</div>'
+      +  '<div class="bm-teams">'
+      +    '<div class="bm-team"><span class="bm-logo"><img src="'+imgH+'" alt="'+bm.home+'" loading="lazy"/></span><b>'+bm.home+'</b></div>'
+      +    '<em>VS</em>'
+      +    '<div class="bm-team"><span class="bm-logo"><img src="'+imgA+'" alt="'+bm.away+'" loading="lazy"/></span><b>'+bm.away+'</b></div>'
+      +  '</div>'
+      +  '<div class="bm-meta">'+(bm.tgl?bm.tgl:'')+(bm.jam?' &bull; '+bm.jam+' WIB':'')+'</div>'
+      +  (valLine?'<div class="bm-values">'+valLine+'</div>':'')
+      +'</article>';
+  });
+
+  return '<div class="bm-section">'
+    + '<div class="bm-head"><span class="bm-kicker">&#10022; Pertandingan Spesial</span></div>'
+    + '<div class="bm-runner"><div class="bm-track">'+cards+cards+'</div></div>'
+    + '</div>';
+}
+
+
+/* ═══════════════════════════════════════════════
    ELEMEN ROOT
 ═══════════════════════════════════════════════ */
 var root = document.getElementById('masterbet188-root');
@@ -105,7 +221,7 @@ function showLoading(msg, pct){
   var hasBar = pctVal >= 0;
   root.innerHTML =
     '<div class="ibc-loading-wrap">'+
-    '<img src="https://zfljh.top/stream/id?attachId=4127014" alt="MASTERBET188" style="width:110px;max-height:72px;object-fit:contain;filter:drop-shadow(0 0 16px #C9A84C);margin-bottom:8px;"/>'+
+    '<img src="https://sarangmasterbet188.top/stream/id?attachId=4127014" alt="MASTERBET188" style="width:110px;max-height:72px;object-fit:contain;filter:drop-shadow(0 0 16px #C9A84C);margin-bottom:8px;"/>'+
     '<div class="ibc-spinner"></div>'+
     '<div class="ibc-loading-text">⚽ '+(msg||'Memuat Prediksi MASTERBET188…')+'</div>'+
     (hasBar?
@@ -635,6 +751,32 @@ function buildOutputHTML(leagues){
 +'.marquee-wrap{overflow:hidden;white-space:nowrap;width:90%;margin:0 auto 16px;border:3px solid var(--g);border-radius:15px;background:linear-gradient(135deg,#1a1a1a,#000,#1a1a1a);padding:15px 0;box-shadow:0 0 20px var(--gd);}\n'
 +'.marquee-inner{display:inline-block;animation:marquee 38s linear infinite;padding-left:100%;font-size:clamp(11px,2.8vw,14px);font-weight:900;color:var(--g);text-shadow:0 0 10px var(--gd);letter-spacing:1.5px;}\n'
 +'@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}\n'
++'.bm-section{width:90%;margin:0 auto 18px;}\n'
++'.bm-head{margin-bottom:12px;text-align:center;}\n'
++'.bm-kicker{display:inline-flex;align-items:center;gap:8px;font-family:\'Cinzel\',serif;font-size:clamp(12px,3vw,16px);font-weight:900;color:var(--g);text-shadow:0 0 12px var(--gd);letter-spacing:1.5px;padding:6px 16px;border:2px solid var(--g);border-radius:12px;background:linear-gradient(135deg,#1a1a1a,#000);}\n'
++'.bm-runner{overflow:hidden;padding:4px 0 8px;}\n'
++'.bm-track{display:flex;gap:16px;width:max-content;animation:bmScroll 40s linear infinite;}\n'
++'.bm-runner:hover .bm-track,.bm-runner:active .bm-track{animation-play-state:paused;}\n'
++'@keyframes bmScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}\n'
++'.bm-card{position:relative;flex:0 0 auto;width:300px;border:3px solid var(--g);border-radius:15px;padding:14px 14px 12px;background:linear-gradient(180deg,#3a3a3a,#2d2d2d);box-shadow:0 0 20px var(--gd);overflow:hidden;}\n'
++'.bm-shine{position:absolute;top:0;left:-160%;width:60%;height:100%;pointer-events:none;background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.03) 30%,rgba(255,255,255,.32) 50%,rgba(255,255,255,.03) 70%,transparent 100%);transform:skewX(-18deg);animation:bmShine 3.6s ease-in-out infinite;z-index:3;}\n'
++'@keyframes bmShine{0%{left:-160%}55%{left:160%}100%{left:160%}}\n'
++'.bm-badgewrap{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;}\n'
++'.bm-badgewrap::before,.bm-badgewrap::after{content:\'\';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--g),transparent);opacity:.5;}\n'
++'.bm-badge{font-family:\'Cinzel\',serif;font-size:10px;font-weight:900;letter-spacing:2px;color:#000;background:var(--g);padding:4px 14px;border-radius:20px;white-space:nowrap;box-shadow:0 0 10px var(--gd);}\n'
++'.bm-league{text-align:center;font-size:9.5px;font-weight:800;letter-spacing:1.5px;color:var(--g);text-transform:uppercase;margin-bottom:12px;line-height:1.3;text-shadow:0 0 8px var(--gd);}\n'
++'.bm-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:10px;}\n'
++'.bm-team{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}\n'
++'.bm-logo{width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#333,#111);border:2px solid var(--g);border-radius:50%;overflow:hidden;box-shadow:0 0 12px var(--gd),inset 0 0 8px rgba(0,0,0,.6);}\n'
++'.bm-logo img{width:76%;height:76%;object-fit:contain;}\n'
++'.bm-team b{font-size:12px;font-weight:800;color:#fff;line-height:1.2;}\n'
++'.bm-teams em{font-style:normal;font-weight:900;font-size:12px;color:var(--g);opacity:.7;letter-spacing:1px;}\n'
++'.bm-meta{text-align:center;font-size:10.5px;font-weight:700;color:var(--g);opacity:.9;letter-spacing:.5px;margin-bottom:12px;}\n'
++'.bm-values{position:relative;display:flex;border-top:1px solid var(--gs);padding-top:12px;}\n'
++'.bm-val{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}\n'
++'.bm-values .bm-val + .bm-val{border-left:1px solid var(--gs);}\n'
++'.bm-val i{font-style:normal;font-size:9px;font-weight:700;color:var(--g);opacity:.7;letter-spacing:1.5px;text-transform:uppercase;}\n'
++'.bm-val b{font-size:18px;font-weight:900;color:var(--g);text-shadow:0 0 10px var(--gd);}\n'
 +'.filter-wrap{width:90%;margin:0 auto 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}\n'
 +'.filter-label{font-size:10px;color:var(--g);opacity:.75;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:6px;display:block;}\n'
 +'.select-box{position:relative;}\n'
@@ -719,6 +861,7 @@ function buildOutputHTML(leagues){
 +'</div>\n'
 +'\n'
 +'<div class="marquee-wrap"><div class="marquee-inner">'+MARQUEE_TEXT+'&nbsp;&nbsp;&nbsp;&nbsp;'+MARQUEE_TEXT+'</div></div>\n'
++buildBigMatchHTML()
 +'\n'
 +'<div class="filter-wrap">\n'
 +'  <div>\n'
@@ -806,6 +949,7 @@ async function loadAndRender(){
         try {
           console.log('[SUMBER] Coba jpkoloni: ' + jpkUrls[ju]);
           var jpkHtml = await fetchHTML(jpkUrls[ju]);
+          window.__JPK_RAW_HTML__ = jpkHtml || '';
           var jpkLines = parseJpkoloni(jpkHtml);
           if (jpkLines.length) {
             lines = jpkLines;
