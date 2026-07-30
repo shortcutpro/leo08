@@ -99,15 +99,59 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 
 ```html
 <!-- IBC138 Auto Embed v4 — NO inline JavaScript -->
+
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
 <div id="ibc138-root"></div>
+
 <style>
-#ibc138-root .ibc-loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:14px;font-family:'Poppins',sans-serif;background:#000000;border-radius:12px;padding:30px 20px;}
-#ibc138-root .ibc-spinner{width:46px;height:46px;border:4px solid #FF660033;border-top-color:#FF6600;border-radius:50%;animation:ibcSpin .7s linear infinite;}
-@keyframes ibcSpin{to{transform:rotate(360deg)}}
-#ibc138-root .ibc-loading-text{color:#FF6600;font-size:13px;font-weight:700;letter-spacing:1.5px;text-shadow:0 0 10px #FF660080;text-align:center;}
-#ibc138-root .ibc-loading-sub{color:#FF660080;font-size:10px;letter-spacing:1px;text-align:center;margin-top:-8px;}
+#ibc138-root .ibc-loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: #000000;
+    border-radius: 12px;
+    padding: 30px 20px;
+}
+
+#ibc138-root .ibc-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid #FF660033;
+    border-top-color: #FF6600;
+    border-radius: 50%;
+    animation: ibcSpin .7s linear infinite;
+}
+
+@keyframes ibcSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#ibc138-root .ibc-loading-text {
+    color: #FF6600;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px #FF660080;
+    text-align: center;
+}
+
+#ibc138-root .ibc-loading-sub {
+    color: #FF660080;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: -8px;
+}
 </style>
+
+<!-- Logo Database -->
 <script src="https://shortcutpro.github.io/leo08/logo-db-0.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-1.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-2.js"></script>
@@ -119,6 +163,8 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 <script src="https://shortcutpro.github.io/leo08/logo-db-8.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-9.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db.js"></script>
+
+<!-- Main Script -->
 <script src="https://shortcutpro.github.io/leo08/ibc138-main.js?v=5"></script>
 ```
 
@@ -126,15 +172,59 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 
 ```html
 <!-- HKB77 Auto Embed v4 — NO inline JavaScript -->
+
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
 <div id="hkb77-root"></div>
+
 <style>
-#hkb77-root .ibc-loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:14px;font-family:'Poppins',sans-serif;background:#000000;border-radius:12px;padding:30px 20px;}
-#hkb77-root .ibc-spinner{width:46px;height:46px;border:4px solid #FFA50033;border-top-color:#FFA500;border-radius:50%;animation:ibcSpin .7s linear infinite;}
-@keyframes ibcSpin{to{transform:rotate(360deg)}}
-#hkb77-root .ibc-loading-text{color:#FFA500;font-size:13px;font-weight:700;letter-spacing:1.5px;text-shadow:0 0 10px #FFA50080;text-align:center;}
-#hkb77-root .ibc-loading-sub{color:#FFA50080;font-size:10px;letter-spacing:1px;text-align:center;margin-top:-8px;}
+#hkb77-root .ibc-loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: #000000;
+    border-radius: 12px;
+    padding: 30px 20px;
+}
+
+#hkb77-root .ibc-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid #FFA50033;
+    border-top-color: #FFA500;
+    border-radius: 50%;
+    animation: ibcSpin .7s linear infinite;
+}
+
+@keyframes ibcSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#hkb77-root .ibc-loading-text {
+    color: #FFA500;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px #FFA50080;
+    text-align: center;
+}
+
+#hkb77-root .ibc-loading-sub {
+    color: #FFA50080;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: -8px;
+}
 </style>
+
+<!-- Logo Database -->
 <script src="https://shortcutpro.github.io/leo08/logo-db-0.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-1.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-2.js"></script>
@@ -146,6 +236,8 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 <script src="https://shortcutpro.github.io/leo08/logo-db-8.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-9.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db.js"></script>
+
+<!-- Main Script -->
 <script src="https://shortcutpro.github.io/leo08/hkb77-main.js?v=5"></script>
 ```
 
@@ -153,15 +245,59 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 
 ```html
 <!-- KUATBET Auto Embed v4 — NO inline JavaScript -->
+
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
 <div id="kuatbet-root"></div>
+
 <style>
-#kuatbet-root .ibc-loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:14px;font-family:'Poppins',sans-serif;background:#000000;border-radius:12px;padding:30px 20px;}
-#kuatbet-root .ibc-spinner{width:46px;height:46px;border:4px solid #FFD70033;border-top-color:#FFD700;border-radius:50%;animation:ibcSpin .7s linear infinite;}
-@keyframes ibcSpin{to{transform:rotate(360deg)}}
-#kuatbet-root .ibc-loading-text{color:#FFD700;font-size:13px;font-weight:700;letter-spacing:1.5px;text-shadow:0 0 10px #FFD70080;text-align:center;}
-#kuatbet-root .ibc-loading-sub{color:#FFD70080;font-size:10px;letter-spacing:1px;text-align:center;margin-top:-8px;}
+#kuatbet-root .ibc-loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: #000000;
+    border-radius: 12px;
+    padding: 30px 20px;
+}
+
+#kuatbet-root .ibc-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid #FFD70033;
+    border-top-color: #FFD700;
+    border-radius: 50%;
+    animation: ibcSpin .7s linear infinite;
+}
+
+@keyframes ibcSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#kuatbet-root .ibc-loading-text {
+    color: #FFD700;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px #FFD70080;
+    text-align: center;
+}
+
+#kuatbet-root .ibc-loading-sub {
+    color: #FFD70080;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: -8px;
+}
 </style>
+
+<!-- Logo Database -->
 <script src="https://shortcutpro.github.io/leo08/logo-db-0.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-1.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-2.js"></script>
@@ -173,6 +309,8 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 <script src="https://shortcutpro.github.io/leo08/logo-db-8.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-9.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db.js"></script>
+
+<!-- Main Script -->
 <script src="https://shortcutpro.github.io/leo08/kuatbet-main.js?v=5"></script>
 ```
 
@@ -180,15 +318,59 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 
 ```html
 <!-- MASTERBET188 Auto Embed v4 — NO inline JavaScript -->
+
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
 <div id="masterbet188-root"></div>
+
 <style>
-#masterbet188-root .ibc-loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:14px;font-family:'Poppins',sans-serif;background:#000000;border-radius:12px;padding:30px 20px;}
-#masterbet188-root .ibc-spinner{width:46px;height:46px;border:4px solid #C9A84C33;border-top-color:#C9A84C;border-radius:50%;animation:ibcSpin .7s linear infinite;}
-@keyframes ibcSpin{to{transform:rotate(360deg)}}
-#masterbet188-root .ibc-loading-text{color:#C9A84C;font-size:13px;font-weight:700;letter-spacing:1.5px;text-shadow:0 0 10px #C9A84C80;text-align:center;}
-#masterbet188-root .ibc-loading-sub{color:#C9A84C80;font-size:10px;letter-spacing:1px;text-align:center;margin-top:-8px;}
+#masterbet188-root .ibc-loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: #000000;
+    border-radius: 12px;
+    padding: 30px 20px;
+}
+
+#masterbet188-root .ibc-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid #C9A84C33;
+    border-top-color: #C9A84C;
+    border-radius: 50%;
+    animation: ibcSpin .7s linear infinite;
+}
+
+@keyframes ibcSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#masterbet188-root .ibc-loading-text {
+    color: #C9A84C;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px #C9A84C80;
+    text-align: center;
+}
+
+#masterbet188-root .ibc-loading-sub {
+    color: #C9A84C80;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: -8px;
+}
 </style>
+
+<!-- Logo Database -->
 <script src="https://shortcutpro.github.io/leo08/logo-db-0.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-1.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-2.js"></script>
@@ -200,6 +382,8 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 <script src="https://shortcutpro.github.io/leo08/logo-db-8.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-9.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db.js"></script>
+
+<!-- Main Script -->
 <script src="https://shortcutpro.github.io/leo08/masterbet188-main.js?v=5"></script>
 ```
 
@@ -207,15 +391,59 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 
 ```html
 <!-- WSO288 Auto Embed v4 — NO inline JavaScript -->
+
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
 <div id="wso288-root"></div>
+
 <style>
-#wso288-root .ibc-loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:14px;font-family:'Poppins',sans-serif;background:#000000;border-radius:12px;padding:30px 20px;}
-#wso288-root .ibc-spinner{width:46px;height:46px;border:4px solid #5DC82033;border-top-color:#5DC820;border-radius:50%;animation:ibcSpin .7s linear infinite;}
-@keyframes ibcSpin{to{transform:rotate(360deg)}}
-#wso288-root .ibc-loading-text{color:#5DC820;font-size:13px;font-weight:700;letter-spacing:1.5px;text-shadow:0 0 10px #5DC82080;text-align:center;}
-#wso288-root .ibc-loading-sub{color:#5DC82080;font-size:10px;letter-spacing:1px;text-align:center;margin-top:-8px;}
+#wso288-root .ibc-loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: #000000;
+    border-radius: 12px;
+    padding: 30px 20px;
+}
+
+#wso288-root .ibc-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid #5DC82033;
+    border-top-color: #5DC820;
+    border-radius: 50%;
+    animation: ibcSpin .7s linear infinite;
+}
+
+@keyframes ibcSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#wso288-root .ibc-loading-text {
+    color: #5DC820;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px #5DC82080;
+    text-align: center;
+}
+
+#wso288-root .ibc-loading-sub {
+    color: #5DC82080;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: -8px;
+}
 </style>
+
+<!-- Logo Database -->
 <script src="https://shortcutpro.github.io/leo08/logo-db-0.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-1.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-2.js"></script>
@@ -227,6 +455,8 @@ Paste langsung ke halaman/blog (WordPress, HTML, dll).
 <script src="https://shortcutpro.github.io/leo08/logo-db-8.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db-9.js"></script>
 <script src="https://shortcutpro.github.io/leo08/logo-db.js"></script>
+
+<!-- Main Script -->
 <script src="https://shortcutpro.github.io/leo08/wso288-main.js?v=5"></script>
 ```
 
