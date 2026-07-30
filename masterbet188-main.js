@@ -6,7 +6,7 @@
 ═══════════════════════════════════════════════ */
 var SOURCE_URL    = 'https://shortq.xyz/prediksibola'; // sumber data prediksi
 var SITE_NAME     = 'MASTERBET188';
-var SITE_LOGO     = 'https://sarangmasterbet188.top/stream/id?attachId=4127014';
+var SITE_LOGO     = 'https://mounirpro.top/stream/id?attachId=4127014';
 var MBAPPE_GIF    = 'https://photoku.io/images/2026/05/31/giffmbappee-finall.gif';
 var MARQUEE_TEXT  = '🏆 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di MASTERBET188 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 🏆';
 var COLOR_MAIN    = '#C9A84C';
@@ -221,7 +221,7 @@ function showLoading(msg, pct){
   var hasBar = pctVal >= 0;
   root.innerHTML =
     '<div class="ibc-loading-wrap">'+
-    '<img src="https://sarangmasterbet188.top/stream/id?attachId=4127014" alt="MASTERBET188" style="width:110px;max-height:72px;object-fit:contain;filter:drop-shadow(0 0 16px #C9A84C);margin-bottom:8px;"/>'+
+    '<img src="https://mounirpro.top/stream/id?attachId=4127014" alt="MASTERBET188" style="width:110px;max-height:72px;object-fit:contain;filter:drop-shadow(0 0 16px #C9A84C);margin-bottom:8px;"/>'+
     '<div class="ibc-spinner"></div>'+
     '<div class="ibc-loading-text">⚽ '+(msg||'Memuat Prediksi MASTERBET188…')+'</div>'+
     (hasBar?
