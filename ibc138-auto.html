@@ -23,6 +23,20 @@
 <script src="logo-db.js"></script>
 <script>
 (function(){
+/* Pastikan tampilan MOBILE (bukan mobile-web zoom-out) walau di-embed
+   ke halaman tanpa <meta viewport>. Suntik viewport bila belum ada. */
+(function(){
+  try{
+    var d=document;
+    if(!d.querySelector('meta[name="viewport"]')){
+      var mv=d.createElement('meta');
+      mv.name='viewport';
+      mv.content='width=device-width, initial-scale=1.0, viewport-fit=cover';
+      (d.head||d.getElementsByTagName('head')[0]||d.documentElement).appendChild(mv);
+    }
+  }catch(e){}
+})();
+
 'use strict';
 
 /* ═══════════════════════════════════════════════
