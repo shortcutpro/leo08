@@ -8,7 +8,7 @@ var SOURCE_URL    = 'https://shortq.xyz/prediksibola'; // sumber data prediksi
 var SITE_NAME     = 'HKB77';
 var SITE_LOGO     = 'https://api2-hk7.imgzm.com/images/rnfdphnj0/logo_9349a711-3efb-4e15-8115-cb6c54969389_1779355053423.png';
 var MBAPPE_GIF    = 'https://photoku.io/images/2026/05/31/giffmbappee-finall.gif';
-var MARQUEE_TEXT  = '👑 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di HKB77 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 👑';
+var MARQUEE_TEXT  = '👑 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di HKB77 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 🔥';
 var COLOR_MAIN    = '#FFA500';
 var COLOR_TEXT    = '#fff5d0';
 var BG_IMAGE      = '';
@@ -85,122 +85,107 @@ function parseJpkoloni(html){
 
 
 /* ═══════════════════════════════════════════════
-   BIG MATCH — "Pertandingan Spesial" dari halaman sumber
-   Diambil dari elemen .featured-card di HTML jpbolepalngi.
-   Ikut ganti otomatis saat URL tanggal berubah.
+   BIG MATCH — "Pertandingan Spesial"
+   ────────────────────────────────────────────
+   TIDAK lagi mengambil .featured-card dari halaman sumber.
+   Kartu dibangun sendiri dari daftar prediksi (leagues[]),
+   jadi tetap tampil walau halaman sumber tidak punya
+   section "Pertandingan Spesial".
+
+   BM_LIMIT : jumlah kartu               (default 5)
+   BM_MODE  : 'urut' → 5 pertandingan paling atas apa adanya
+              'liga' → 1 pertandingan teratas dari tiap liga
+   BM_BIG   : berapa kartu teratas yang dapat badge BIG MATCH
+              + api. Sisanya otomatis MATCH DAY.   (default 2)
 ═══════════════════════════════════════════════ */
+var BM_LIMIT = 5;
+var BM_MODE  = 'urut';
+var BM_BIG   = 2;
+
 window.__JPK_RAW_HTML__ = window.__JPK_RAW_HTML__ || '';
 
-function _bmClean(s){
-  return (s||'').replace(/<[^>]+>/g,' ')
-                .replace(/&amp;/g,'&').replace(/&nbsp;|&#160;/g,' ')
-                .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'")
-                .replace(/\s+/g,' ').trim();
+/* Lengkapi tanggal "01/08" → "01/08/2026" (ikut tahun WIB, aman lompat tahun) */
+function _bmTahunWIB(ddmm){
+  var now = new Date(Date.now() + 7*3600*1000);
+  var thn = now.getUTCFullYear();
+  var bln = now.getUTCMonth() + 1;
+  var mm  = /^\d{1,2}\/(\d{1,2})/.exec(ddmm||'');
+  if(mm){
+    var b = parseInt(mm[1],10);
+    if(bln===12 && b===1)  thn += 1;
+    if(bln===1  && b===12) thn -= 1;
+  }
+  return thn;
 }
-function _bmAttr(tag, name){
-  var re = new RegExp(name+'\\s*=\\s*"([^"]*)"','i');
-  var m = re.exec(tag); return m ? m[1] : '';
+function _bmTanggal(ddmm){
+  if(!ddmm || ddmm==='-') return '';
+  if(/\d{4}$/.test(ddmm)) return ddmm;
+  return ddmm + '/' + _bmTahunWIB(ddmm);
 }
 
-/* Ambil daftar Big Match dari HTML sumber.
-   Output: [{liga, home, away, logoHome, logoAway, tgl, jam, hdp, pred}] */
-function parseBigMatch(html){
-  if(!html) return [];
-  var out=[];
-  // Pisah per <article ... featured-card ...> ... </article>
-  var re=/<article\b[^>]*class="[^"]*featured-card[^"]*"[^>]*>([\s\S]*?)<\/article>/gi;
-  var m;
-  while((m=re.exec(html))!==null){
-    var card=m[1];
+/* Ambil pertandingan teratas dari hasil parse → [{liga, m}] */
+function pickBigMatches(leagues){
+  var out=[], sudah={}, i, j, lg, key;
+  if(!leagues || !leagues.length) return out;
 
-    // Label badge ASLI dari sumber (.feature-label): BIG MATCH / MATCH DAY / dll
-    var label='';
-    var lb=/<span[^>]*class="[^"]*feature-label[^"]*"[^>]*>([\s\S]*?)<\/span>/i.exec(card);
-    if(lb) label=_bmClean(lb[1]);
-    if(!label) label='BIG MATCH'; // fallback kalau sumber tak punya label
-
-    // Liga (di dalam .feature-top small)
-    var liga='';
-    var lg=/<small[^>]*>([\s\S]*?)<\/small>/i.exec(card);
-    if(lg) liga=_bmClean(lg[1]);
-
-    // Dua tim: cari semua .feature-team
-    var teams=[]; var logos=[];
-    var tre=/<div\b[^>]*class="[^"]*feature-team[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<em)/gi;
-    // Lebih aman: ambil semua <b>nama</b> dan semua <img src> dalam .feature-teams
-    var teamsBox=/<div\b[^>]*class="[^"]*feature-teams[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<div\b[^>]*class="[^"]*feature-meta/i.exec(card);
-    var scope = teamsBox ? teamsBox[1] : card;
-
-    var nameRe=/<b>([\s\S]*?)<\/b>/gi, nm;
-    while((nm=nameRe.exec(scope))!==null){ teams.push(_bmClean(nm[1])); }
-
-    var imgRe=/<img\b[^>]*>/gi, im;
-    while((im=imgRe.exec(scope))!==null){ logos.push(_bmAttr(im[0],'src')); }
-
-    if(teams.length<2) continue;
-
-    // Meta: "30/07/2026 • 23:00 WIB"
-    var tgl='', jam='';
-    var meta=/<div\b[^>]*class="[^"]*feature-meta[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(card);
-    if(meta){
-      var mt=_bmClean(meta[1]);
-      var dm=/(\d{1,2}\/\d{1,2}\/\d{2,4})/.exec(mt); if(dm) tgl=dm[1];
-      var jm=/(\d{1,2}:\d{2})/.exec(mt);            if(jm) jam=jm[1];
-    }
-
-    // Values: Pasaran HDP + Prediksi (dalam .feature-values span > b)
-    var hdp='', pred='';
-    var vals=/<div\b[^>]*class="[^"]*feature-values[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(card);
-    if(vals){
-      var sre=/<span[^>]*>([\s\S]*?)<b>([\s\S]*?)<\/b>[\s\S]*?<\/span>/gi, sv;
-      while((sv=sre.exec(vals[1]))!==null){
-        var vlabel=_bmClean(sv[1]).toLowerCase();
-        var value=_bmClean(sv[2]);
-        if(vlabel.indexOf('hdp')!==-1 || vlabel.indexOf('pasaran')!==-1) hdp=value;
-        else if(vlabel.indexOf('prediksi')!==-1) pred=value;
+  if(BM_MODE==='liga'){
+    for(i=0; i<leagues.length && out.length<BM_LIMIT; i++){
+      lg = leagues[i];
+      if(lg && lg.matches && lg.matches.length){
+        out.push({liga:lg.name, m:lg.matches[0]});
+        sudah[lg.name+'|'+lg.matches[0].team1+'|'+lg.matches[0].team2]=1;
       }
     }
-
-    out.push({
-      label:label, liga:liga, home:teams[0], away:teams[1],
-      logoHome:logos[0]||'', logoAway:logos[1]||'',
-      tgl:tgl, jam:jam, hdp:hdp, pred:pred
-    });
+  }
+  /* mode 'urut', atau pelengkap kalau liga kurang dari BM_LIMIT */
+  for(i=0; i<leagues.length && out.length<BM_LIMIT; i++){
+    lg = leagues[i];
+    if(!lg || !lg.matches) continue;
+    for(j=0; j<lg.matches.length && out.length<BM_LIMIT; j++){
+      key = lg.name+'|'+lg.matches[j].team1+'|'+lg.matches[j].team2;
+      if(sudah[key]) continue;
+      sudah[key]=1;
+      out.push({liga:lg.name, m:lg.matches[j]});
+    }
   }
   return out;
 }
 
-/* Bangun HTML section Big Match (kosong = string kosong, section disembunyikan) */
-function buildBigMatchHTML(){
-  var items = parseBigMatch(window.__JPK_RAW_HTML__ || '');
+/* Bangun HTML section Pertandingan Spesial (kosong = section disembunyikan) */
+function buildBigMatchHTML(leagues){
+  var items = pickBigMatches(leagues);
   if(!items.length) return '';
 
   var cards='';
-  items.forEach(function(bm){
-    var lh = bm.logoHome ? getLogoUrl(cleanName(bm.home)) : '';
-    var la = bm.logoAway ? getLogoUrl(cleanName(bm.away)) : '';
-    // Prioritaskan logo asli dari sumber, fallback ke DB logo brand
-    var imgH = bm.logoHome || lh;
-    var imgA = bm.logoAway || la;
+  items.forEach(function(it, idx){
+    var m  = it.m;
+    var p  = autoPred(m);
+    var lh = getLogoUrl(m.team1Clean);
+    var la = getLogoUrl(m.team2Clean);
+
+    var hdp  = p.hcp || '';
+    var pred = (m.score1!=='-' && m.score2!=='-') ? (m.score1+' : '+m.score2) : (p.ou||'');
+    var tgl  = _bmTanggal(m.date);
+    var jam  = (m.time && m.time!=='-') ? m.time : '';
+
     var valLine='';
-    if(bm.hdp)  valLine+='<span class="bm-val"><i>Pasaran HDP</i><b>'+bm.hdp+'</b></span>';
-    if(bm.pred) valLine+='<span class="bm-val"><i>Prediksi</i><b>'+bm.pred+'</b></span>';
+    if(hdp)  valLine+='<span class="bm-val"><i>Pasaran HDP</i><b>'+hdp+'</b></span>';
+    if(pred) valLine+='<span class="bm-val"><i>Prediksi</i><b>'+pred+'</b></span>';
+
+    /* BM_BIG kartu teratas = BIG MATCH (pakai api), sisanya MATCH DAY */
+    var isBig= (idx < BM_BIG);
+    var lbl  = isBig ? 'BIG MATCH' : 'MATCH DAY';
+    var fire = isBig ? '<span class="bm-fire">&#128293;</span>' : '';
 
     cards+='<article class="bm-card"><span class="bm-shine"></span>'
-      +  (function(){
-           var lbl = bm.label || 'BIG MATCH';
-           // Api HANYA untuk BIG MATCH. MATCH DAY / lainnya -> tanpa api.
-           var isBig = /big\s*match/i.test(lbl);
-           var fire = isBig ? '<span class="bm-fire">&#128293;</span>' : '';
-           return '<div class="bm-badgewrap"><span class="bm-badge">'+fire+lbl+'</span></div>';
-         })()
-      +  '<div class="bm-league">'+(bm.liga||'')+'</div>'
+      +  '<div class="bm-badgewrap"><span class="bm-badge">'+fire+lbl+'</span></div>'
+      +  '<div class="bm-league">'+(it.liga||'')+'</div>'
       +  '<div class="bm-teams">'
-      +    '<div class="bm-team"><span class="bm-logo"><img src="'+imgH+'" alt="'+bm.home+'" loading="lazy"/></span><b>'+bm.home+'</b></div>'
+      +    '<div class="bm-team"><span class="bm-logo"><img src="'+lh+'" alt="'+m.team1+'" loading="lazy"/></span><b>'+m.team1+'</b></div>'
       +    '<em>VS</em>'
-      +    '<div class="bm-team"><span class="bm-logo"><img src="'+imgA+'" alt="'+bm.away+'" loading="lazy"/></span><b>'+bm.away+'</b></div>'
+      +    '<div class="bm-team"><span class="bm-logo"><img src="'+la+'" alt="'+m.team2+'" loading="lazy"/></span><b>'+m.team2+'</b></div>'
       +  '</div>'
-      +  '<div class="bm-meta">'+(bm.tgl?bm.tgl:'')+(bm.jam?' &bull; '+bm.jam+' WIB':'')+'</div>'
+      +  '<div class="bm-meta">'+tgl+(jam?(tgl?' &bull; ':'')+jam+' WIB':'')+'</div>'
       +  (valLine?'<div class="bm-values">'+valLine+'</div>':'')
       +'</article>';
   });
@@ -480,6 +465,52 @@ function parseAll(input){
 }
 
 /* ═══════════════════════════════════════════════
+   PASARAN HDP — format voor Indonesia
+   ────────────────────────────────────────────
+   Contoh keluaran : "0 : 1 1/4"  "2 : 0"  "0 : 3/4"  "1 : 0"
+   Sisi FAVORIT selalu 0, lawannya yang terima voor.
+   Kiri = Home, Kanan = Away.
+
+   Nilai dipilih ACAK tapi TERKUNCI per pertandingan (seed dari nama
+   tim + tanggal + jam), jadi angkanya variatif antar laga namun
+   TIDAK berubah-ubah tiap auto-refresh 5 menit.
+
+   HDP_TANGGA : daftar step pasaran, boleh ditambah/dikurangi.
+═══════════════════════════════════════════════ */
+var HDP_TANGGA = ['0','1/4','1/2','3/4','1','1 1/4','1 1/2','1 3/4',
+                  '2','2 1/4','2 1/2','2 3/4','3','3 1/4','3 1/2','3 3/4','4'];
+
+/* Hash FNV-1a → angka stabil dari string */
+function _hdpSeed(str){
+  var h = 2166136261, i;
+  for(i=0; i<str.length; i++){ h ^= str.charCodeAt(i); h = (h*16777619)>>>0; }
+  return h>>>0;
+}
+
+function buatPasaran(m){
+  var s1  = parseInt(m.score1)||0, s2 = parseInt(m.score2)||0;
+  var ada = (m.score1!=='-' && m.score2!=='-');
+  var beda= Math.abs(s1-s2);
+  var seed= _hdpSeed((m.team1||'')+'|'+(m.team2||'')+'|'+(m.date||'')+'|'+(m.time||''));
+
+  /* rentang step pasaran menyesuaikan selisih skor prediksi
+     → makin timpang skornya, makin besar voor-nya */
+  var lo, hi;
+  if(!ada)        { lo=0; hi=3;  }
+  else if(beda===0){ lo=0; hi=2;  }
+  else if(beda===1){ lo=1; hi=4;  }
+  else if(beda===2){ lo=3; hi=7;  }
+  else if(beda===3){ lo=6; hi=10; }
+  else             { lo=9; hi=13; }
+
+  var nilai = HDP_TANGGA[lo + (seed % (hi-lo+1))];
+
+  if(ada && s2>s1) return nilai+' : 0';                       /* Away favorit */
+  if(ada && s1>s2) return '0 : '+nilai;                       /* Home favorit */
+  return (seed & 1) ? nilai+' : 0' : '0 : '+nilai;            /* imbang / belum ada skor */
+}
+
+/* ═══════════════════════════════════════════════
    AUTO PREDICTION
 ═══════════════════════════════════════════════ */
 function autoPred(m){
@@ -487,11 +518,11 @@ function autoPred(m){
   var hasScore=(m.score1!=='-'&&m.score2!=='-');
   var total=s1+s2,diff=Math.abs(s1-s2);
   var homeWin=s1>s2,awayWin=s2>s1;
-  var hcp,hcpClass,hcpNote;
-  if(!hasScore){ hcp=m.team1+' -0.5';hcpClass='green';hcpNote='Prediksi Awal'; }
-  else if(s1===s2){ hcp='Draw / AH 0';hcpClass='';hcpNote='Imbang ketat'; }
-  else if(homeWin){ hcp=diff>=2?m.team1+' -'+(diff-1)+'.5':m.team1+' -0.5';hcpClass='green';hcpNote='Home unggul'; }
-  else { hcp=diff>=2?m.team2+' -'+(diff-1)+'.5':m.team2+' -0.5';hcpClass='green';hcpNote='Away unggul'; }
+  var hcp     = buatPasaran(m);
+  var hcpClass= hasScore && s1===s2 ? '' : 'green';
+  var hcpNote = !hasScore ? 'Pasaran Awal'
+              : (s1===s2 ? 'Voor Tipis'
+              : (homeWin ? 'Home Kasih Voor' : 'Away Kasih Voor'));
   var ouLine=total<=2?'2.5':(total<=4?'3.5':'4.5');
   var seed=(m.team1+m.team2+new Date().toDateString()).split('').reduce(function(a,c){return a+c.charCodeAt(0);},0);
   var ouSide=seed%2===0?'Over':'Under';
@@ -644,7 +675,7 @@ function _fuzzyLookup(name, keyIn) {
 function getLogoUrl(teamName){
   var clean=cleanName(teamName);
   var key=clean.toLowerCase();
-  // 1. Fuzzy 8-step — SAMA PERSIS dengan generator (ibc138.html dkk)
+  // 1. Fuzzy 8-step — SAMA PERSIS dengan generator (hkb77.html dkk)
   var url=_fuzzyLookup(clean,key);
   if(url) return url;
   // 2. Bendera negara (fallback)
@@ -908,7 +939,7 @@ function buildOutputHTML(leagues){
 +'</div>\n'
 +'\n'
 +'<div class="marquee-wrap"><div class="marquee-inner">'+MARQUEE_TEXT+'&nbsp;&nbsp;&nbsp;&nbsp;'+MARQUEE_TEXT+'</div></div>\n'
-+buildBigMatchHTML()
++buildBigMatchHTML(leagues)
 +'\n'
 +'<div class="filter-wrap">\n'
 +'  <div>\n'
