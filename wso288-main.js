@@ -22,7 +22,7 @@ console.log("[leo08] date-fix-2026-08-24 aktif");
 ═══════════════════════════════════════════════ */
 var SOURCE_URL    = 'https://shortq.xyz/prediksibola'; // sumber data prediksi
 var SITE_NAME     = 'WSO288';
-var SITE_LOGO     = 'https://api2-ws2.imgzm.com/images/jqjfjpoen4u/logo_5a9093ad-d5f7-48ac-a12b-43f042867fe5_1783116475127.png';
+var SITE_LOGO     = 'https://autodirect-wso288.bio/assets/images/setting/logo20250415154512.png';
 var MBAPPE_GIF    = 'https://photoku.io/images/2026/05/31/giffmbappee-finall.gif';
 var MARQUEE_TEXT  = '👑 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di WSO288 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 🔥';
 var COLOR_MAIN    = '#5DC820';
@@ -236,7 +236,7 @@ function showLoading(msg, pct){
   var hasBar = pctVal >= 0;
   root.innerHTML =
     '<div class="ibc-loading-wrap">'+
-    '<img src="https://api2-ws2.imgzm.com/images/jqjfjpoen4u/logo_5a9093ad-d5f7-48ac-a12b-43f042867fe5_1783116475127.png" alt="WSO288" style="width:110px;max-height:72px;object-fit:contain;filter:drop-shadow(0 0 16px #5DC820);margin-bottom:8px;"/>'+
+    '<img src="https://autodirect-wso288.bio/assets/images/setting/logo20250415154512.png" alt="WSO288" style="width:110px;max-height:72px;object-fit:contain;filter:drop-shadow(0 0 16px #5DC820);margin-bottom:8px;"/>'+
     '<div class="ibc-spinner"></div>'+
     '<div class="ibc-loading-text">⚽ '+(msg||'Memuat Prediksi WSO288…')+'</div>'+
     (hasBar?
