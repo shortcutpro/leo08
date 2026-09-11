@@ -30,6 +30,8 @@ var COLOR_TEXT    = '#d8ffd0';
 var BG_IMAGE      = '';
 var BG_OVERLAY    = 'rgba(1,8,0,0.88), rgba(3,15,0,0.90)';
 var AUTO_REFRESH  = 5 * 60 * 1000; // 5 menit
+var CACHE_KEY     = 'wso288_pred_cache_v1';
+var CACHE_TTL     = 30 * 60 * 1000; // cache dianggap segar 30 menit
 
 var PROXIES = [
   { name:'AllOrigins',   url:function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);}, text:true },
@@ -1071,52 +1073,76 @@ function injectHTML(html){
 /* ═══════════════════════════════════════════════
    MAIN FLOW
 ═══════════════════════════════════════════════ */
+/* Baca hasil terakhir dari localStorage */
+function readCache(){
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return null;
+    var obj = JSON.parse(raw);
+    if(!obj || !obj.html) return null;
+    return obj; // { html, ts }
+  } catch(e){ return null; }
+}
+/* Simpan hasil terbaru ke localStorage */
+function writeCache(html){
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ html: html, ts: Date.now() }));
+  } catch(e){}
+}
+
+/* Ambil data dari jaringan lalu bangun HTML output (tanpa animasi buatan) */
+async function fetchFreshOutput(showProgress){
+  var lines = null;
+
+  // 1) SUMBER UTAMA: jpkoloni — URL otomatis mengikuti tanggal hari ini (WIB)
+  if (JPK_ENABLED) {
+    var jpkUrls = jpkDaftarUrl();
+    for (var ju = 0; ju < jpkUrls.length && !lines; ju++) {
+      try {
+        var jpkHtml = await fetchHTML(jpkUrls[ju]);
+        window.__JPK_RAW_HTML__ = jpkHtml || '';
+        var jpkLines = parseJpkoloni(jpkHtml);
+        if (jpkLines.length) { lines = jpkLines; }
+      } catch (eJpk) { console.warn('[SUMBER] jpkoloni gagal: ' + eJpk.message); }
+    }
+  }
+
+  // 2) FALLBACK: sumber lama (shortq.xyz) kalau jpkoloni tidak tersedia
+  if (!lines || !lines.length) {
+    var html = await fetchHTML(SOURCE_URL);
+    lines = parseRawHtml(html);
+  }
+  if(!lines.length) throw new Error('Tidak ada data ditemukan');
+
+  var leagues = parseAll(lines.join('\n'));
+  if(!leagues.length) throw new Error('Data tidak dapat diparse');
+
+  if(showProgress) updateProgress(100);
+  return buildOutputHTML(leagues);
+}
+
 async function loadAndRender(){
+  var cache = readCache();
+
+  // TAMPILKAN LANGSUNG dari cache — tanpa layar "Memuat Prediksi…"
+  if(cache && cache.html){
+    injectHTML(cache.html);
+    // Jika cache masih segar, tak perlu ambil ulang sekarang
+    if(Date.now() - (cache.ts||0) < CACHE_TTL) return;
+    // Kalau sudah basi, refresh diam-diam di latar belakang
+    try {
+      var freshBg = await fetchFreshOutput(false);
+      writeCache(freshBg);
+      injectHTML(freshBg);
+    } catch(e){ console.warn('[WSO288] refresh latar gagal:', e.message); }
+    return;
+  }
+
+  // Belum ada cache (kunjungan pertama) — baru tampilkan loading
   try {
     showLoading('Memuat Prediksi WSO288…', 0);
-    await animateProgress(0, 5, 400);
-
-    var lines = null;
-
-    // 1) SUMBER UTAMA: jpbolepalngi — URL otomatis mengikuti tanggal hari ini (WIB)
-    if (JPK_ENABLED) {
-      var jpkUrls = jpkDaftarUrl();
-      for (var ju = 0; ju < jpkUrls.length && !lines; ju++) {
-        try {
-          console.log('[SUMBER] Coba jpkoloni: ' + jpkUrls[ju]);
-          var jpkHtml = await fetchHTML(jpkUrls[ju]);
-          window.__JPK_RAW_HTML__ = jpkHtml || '';
-          var jpkLines = parseJpkoloni(jpkHtml);
-          if (jpkLines.length) {
-            lines = jpkLines;
-            console.log('[SUMBER] jpkoloni OK (' + jpkLines.length + ' baris): ' + jpkUrls[ju]);
-          } else {
-            console.warn('[SUMBER] jpkoloni kosong: ' + jpkUrls[ju]);
-          }
-        } catch (eJpk) { console.warn('[SUMBER] jpkoloni gagal: ' + eJpk.message); }
-      }
-    }
-
-    await animateProgress(60, 75, 300);
-
-    // 2) FALLBACK: sumber lama (shortq.xyz) kalau jpkoloni tidak tersedia
-    if (!lines || !lines.length) {
-      var html = await fetchHTML(SOURCE_URL);
-      lines = parseRawHtml(html);
-    }
-    if(!lines.length) throw new Error('Tidak ada data ditemukan');
-    var input = lines.join('\n');
-
-    await animateProgress(75, 85, 200);
-    var leagues = parseAll(input);
-    if(!leagues.length) throw new Error('Data tidak dapat diparse');
-
-    await animateProgress(85, 95, 200);
-    var output = buildOutputHTML(leagues);
-
-    await animateProgress(95, 100, 200);
-    await new Promise(function(r){ setTimeout(r, 150); });
-
+    var output = await fetchFreshOutput(true);
+    writeCache(output);
     injectHTML(output);
   } catch(e) {
     console.error('[WSO288 Embed]',e);
@@ -1127,9 +1153,17 @@ async function loadAndRender(){
 /* ═══════════════════════════════════════════════
    INIT + AUTO REFRESH
 ═══════════════════════════════════════════════ */
+async function backgroundRefresh(){
+  try {
+    var fresh = await fetchFreshOutput(false);
+    writeCache(fresh);
+    injectHTML(fresh);
+  } catch(e){ console.warn('[WSO288] auto-refresh gagal:', e.message); }
+}
+
 function init(){
   loadAndRender();
-  setInterval(loadAndRender, AUTO_REFRESH);
+  setInterval(backgroundRefresh, AUTO_REFRESH);
 }
 
 if(document.readyState==='loading'){
