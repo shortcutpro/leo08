@@ -27,7 +27,7 @@ var MBAPPE_GIF    = 'https://photoku.io/images/2026/05/31/giffmbappee-finall.gif
 var MARQUEE_TEXT  = '👑 PREDIKSI BOLA TERUPDATE ! Tunggu apa lagi? Daftar di HKB77 dan nikmati pengalaman taruhan terbaik dengan peluang besar! 🔥';
 var COLOR_MAIN    = '#FFA500';
 var COLOR_TEXT    = '#fff5d0';
-var BG_IMAGE      = '';
+var BG_IMAGE      = 'https://i.postimg.cc/Yq44LgYx/BG-WEB-HKB77.png';
 var BG_OVERLAY    = 'rgba(8,4,0,0.88), rgba(18,9,0,0.90)';
 var AUTO_REFRESH  = 5 * 60 * 1000; // 5 menit
 var CACHE_KEY     = 'hkb77_pred_cache_v1';
@@ -829,6 +829,7 @@ function buildOutputHTML(leagues){
 +'*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}\n'
 +':root{--g:'+bg+';--gl:'+ltr+';--g2:'+drk+';--gd:'+bg+'66;--gs:'+bg+'22;--cr:'+txt+';--bg:#000000;--bg2:#0d0d0d;}\n'
 +'body{background:linear-gradient(135deg,'+BG_OVERLAY+'),url("'+BG_IMAGE+'") center/cover fixed no-repeat #000;font-family:\'Poppins\',sans-serif;color:var(--cr);min-height:100vh;overflow-x:hidden;}\n'
++'@media(max-width:768px){body{background:linear-gradient(135deg,'+BG_OVERLAY+'),url("https://i.postimg.cc/44PMHHs5/BG-MOBILE-HKB77.png") center/cover fixed no-repeat #000;}}\n'
 +'#hkb77-root{background:linear-gradient(135deg,'+BG_OVERLAY+'),url("'+BG_IMAGE+'") center/cover fixed no-repeat #000;padding:1px 0;border-radius:0;min-height:100px;}\n'
 +'.site-logo{display:flex;align-items:center;justify-content:space-between;margin:22px auto 10px;width:95%;padding:0;gap:4px;}\n'
 +'.mbappe-gif{width:22vw;max-width:110px;min-width:56px;height:auto;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 0 18px var(--g));transition:transform .35s ease,filter .35s ease;cursor:pointer;}\n'
