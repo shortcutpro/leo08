@@ -45,7 +45,7 @@ var PROXIES = [
    Set JPK_ENABLED = false untuk kembali ke sumber lama.
 ═══════════════════════════════════════════════ */
 var JPK_ENABLED = true;
-var JPK_BASE    = 'https://jpbolepalngi.pagesco.de/prediksi-bola-';
+var JPK_BASE    = 'https://bolapelangi2.jadwalbola.org/prediksi-bola-';
 var JPK_BULAN   = ['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
 
 function jpkTanggalWIB(offsetHari){
